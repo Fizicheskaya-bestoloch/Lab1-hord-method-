@@ -1,47 +1,68 @@
-module modu
-	contains
-	subroutine prog(A,B,C,D,X,Imax)
-	implicit none
-	integer :: Imax,i
-	real(8) :: A(Imax), B(Imax), C(Imax), D(Imax), X(Imax),alf(Imax), bet(Imax)
-	!____________________________________________________________Прямой ход
-	alf(1)=-C(1)/B(1)
-	bet(1)=D(1)/B(1)
-	i=2
-	do while (i .LE. (Imax-1))!цикл вычислеия коэффициентов альфа и бета
-		alf(i)=-(C(i)/(B(i)+A(i)*alf(i-1)))
-		bet(i)=(D(i)-A(i)*bet(i-1))/(B(i)+A(i)*alf(i-1))
-		i = i + 1
-	end do
-	!____________________________________________________________Обратный ход
-	X(Imax)=(D(Imax)-A(Imax)*bet(Imax-1))/(B(Imax)+A(Imax)*alf(Imax-1))
-	i=Imax-1
-	do while (i .GE. 1) ! цикл вычисления X(i)
-		X(i)=alf(i)*X(i+1)+bet(i)
-		i = i - 1
-	end do
-	end subroutine
-end module
-program metod_progonki
-use modu
+module dlyahord
+
+contains
+subroutine DD(f, x1, xk, i, eps, xa, xb)
 implicit none
-integer, parameter :: Imax=5
+real(8) :: f, x1, x0, xa, xb, xk, eps, x2  
+integer, parameter :: imax = 100
 integer :: i
-real(8) :: A(Imax), B(Imax), C(Imax), D(Imax), X(Imax)
-
-call random_number(A) !заполнение матриц псевдослучайными числами
-call random_number(B)
-call random_number(C)
-call random_number(D)
-i=1
-A(1)=0
-C(Imax)=0
 i = 1
+x1 = xa
+x0 = xb
 
-call prog(A,B,C,D,X,Imax)
 
-do i =1,Imax
-	write(*,'(a3,i2,a5,f8.5)')'X(',i,') = ',X(i)
+x2 = x1 - (f(x1) * (x1 - x0))/(f(x1) - f(x0))
+write (*,*) 'x2 = ', x2, 'f(x2) = ', f(x2)
+do while (( abs(x2 - x1) .GT. eps) .and. (i .LT. imax))  
+x1 = x2
+x2 = x1 - (f(x1) * (x1 - x0))/(f(x1) - f(x0))
+i = i + 1
+
+write (*,*) 'x2 = ', x2, 'f(x2) = ', f(x2) 
+
 end do
 
-end program
+xk = (x2+x1)/2.0
+end subroutine DD
+end module dlyahord
+
+program hord
+use dlyahord
+implicit none
+real(8) xa, xb, eps, xk, x0, x1
+integer :: i  
+
+interface
+
+	real(8) function f(x)
+	real (8) :: x
+	end function f
+
+end interface
+
+
+write (*,*) 'enter xa' 
+read (*,*) xa
+
+write (*,*) 'enter xb'
+read (*,*) xb
+
+write (*,*) 'enter eps' 	
+read (*,*) eps
+
+
+
+call DD(f, x1, xk, i, eps, xa, xb)
+
+
+write (*,*) 'xk = ', xk
+write (*,*) 'f(xk) = ', f(xk)
+write (*,*) 'i =', i
+pause 
+end program				
+
+real(8) function f(x)
+implicit none
+real(8) :: x
+f = x**4-3*x**2+75*x-9999
+end function f
